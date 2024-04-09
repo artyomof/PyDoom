@@ -3,13 +3,16 @@ import pygame
 from pygame.locals import *
 import sys
 import game as g
+import re
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((1280, 960), RESIZABLE)
 pygame.init()
 running = True
+result = result = re.search('(a)', 'aaaaa')
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((1280, 960), RESIZABLE)
-parsed = {'xuy': 'print'}
+parsed =    {'(xuy)\(([^)]*?)': ['print({}', [2]],
+			'(spawn)(\([^)]*?)': []}
 class cons(pygame.sprite.Sprite):
 	def __init__(self):
 		pygame.sprite.Sprite.__init__(self)
@@ -47,14 +50,17 @@ class cons(pygame.sprite.Sprite):
 				curr_null += 1
 			nulls.append(curr_null)
 		for rows in self.text:
-			new.append(rows.split())
+			new.append(rows)
 		for row in range(len(new)):
-			for word in range(len(new[row])):
-				for i in iter(parsed):
-					if i in new[row][word]:
-						new[row][word] = new[row][word].replace(i, parsed[i])
+			for i in parsed:
+				if re.search(i, new[row]) != None:
+					result = re.search(i, new[row])
+					changables = []
+					for j in parsed[i][1]:
+						changables.append(result.group(j))
+					new[row] = re.sub(i, parsed[i][0].format(*changables), new[row])
 		for row in range(len(new)):
-			self.text[row] = nulls[row]*' '+' '.join(new[row])
+			self.text[row] = nulls[row]*' ' + new[row]
 
 
 ConsoleCalled = False

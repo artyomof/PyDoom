@@ -14,7 +14,7 @@ WIDTH = 1280
 clock = pygame.time.Clock()
 ACC = 0.5
 FRIC = -0.12
-parsed = {'xuy': 'print'}
+parsed = {'(xuy)\(([^)]*)': ['print({}', [2]]}
 class App:
 	def __init__(self):
 		App.TP = Player("test/right/1.png", 0, 0, animation_folder = 'test')
@@ -51,6 +51,9 @@ class App:
 					if event.key == pygame.K_SPACE:
 						App.TP.jump()
 					if event.key == pygame.K_ESCAPE:
+						if App.ConsoleCalled:
+							App.cons1.parse()
+							App.cons1.writetofile(App.cons1.text, 'cpns.py')
 						App.ConsoleCalled = not App.ConsoleCalled
 					if App.ConsoleCalled:
 						if event.key == pygame.K_RETURN:
@@ -133,8 +136,6 @@ class App:
 					App.TP.curr_jump = 0
 			App.TP.update()
 			clock.tick(60)
-		App.cons1.parse()
-		App.cons1.writetofile(App.cons1.text, 'cpns.py')
 		pygame.quit()
 		sys.exit()
 class Object(pygame.sprite.Sprite):
@@ -309,7 +310,7 @@ class Scene():
 		pygame.display.set_caption(self.caption)
 		self.objects.update()
 		self.objects.draw(App.screen)
-		mouse_now = Text(str(App.mouse), App.mouse, fontsize = 24, color = 'white')
+		mouse_now = Text(str(App.mouse), (App.mouse[0]+10, App.mouse[1]), fontsize = 27, color = (146,110,174))
 		mouse_now.draw()
 		pygame.display.update()
 		try:
@@ -362,14 +363,17 @@ class cons(pygame.sprite.Sprite):
 				curr_null += 1
 			nulls.append(curr_null)
 		for rows in self.text:
-			new.append(rows.split())
+			new.append(rows)
 		for row in range(len(new)):
-			for word in range(len(new[row])):
-				for i in iter(parsed):
-					if i in new[row][word]:
-						new[row][word] = new[row][word].replace(i, parsed[i])
+			for i in parsed:
+				if re.search(i, new[row]) != None:
+					result = re.search(i, new[row])
+					changables = []
+					for j in parsed[i][1]:
+						changables.append(result.group(j))
+					new[row] = re.sub(i, parsed[i][0].format(*changables), new[row])
 		for row in range(len(new)):
-			self.text[row] = nulls[row]*' '+' '.join(new[row])
+			self.text[row] = nulls[row]*' ' + new[row]
 if __name__ == "__main__":
 	App().run()
 
