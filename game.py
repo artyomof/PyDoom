@@ -46,6 +46,10 @@ class App:
 			for event in pygame.event.get():
 				if event.type == QUIT:
 					App.running = False
+				if event.type == MOUSEBUTTONDOWN:
+					for i in App.scene.objects:
+						if i.rect.collidepoint(App.mouse):
+							i.CallEvent()
 				if event.type == KEYDOWN:
 					App.do_shortcut(self, event)
 					if event.key == pygame.K_SPACE:
@@ -107,9 +111,6 @@ class App:
 			App.TP.moving_right = False
 			App.TP.move()
 			App.scene.draw()
-			for i in App.scene.objects:
-				if i.click():
-					i.CallEvent()
 			if App.TP.animation:
 				if App.TP.jumping:
 					App.TP.image = App.TP.animation[0][App.TP.curr_jump]
@@ -139,7 +140,7 @@ class App:
 		pygame.quit()
 		sys.exit()
 class Object(pygame.sprite.Sprite):
-	def __init__(self, x, y, filename, name = None, event = None):
+	def __init__(self, x, y, filename = None, name = None, event = None):
 		pygame.sprite.Sprite.__init__(self)
 		self.event = event
 		self.id = App.object_id
@@ -148,18 +149,13 @@ class Object(pygame.sprite.Sprite):
 			self.name = 'Object {}'.format(self.id)
 		else:
 			self.name = name
-		self.image = pygame.image.load(filename)
-		self.rect = self.image.get_rect(bottomleft=(x, y))
-		self.pos = vec((0, 0))
+		if filename:
+			self.image = pygame.image.load(filename)
+			self.rect = self.image.get_rect(bottomleft=(x, y))
+			
 	def __str__(self):
 		return self.name
-	def click(self):
-		if self.rect.collidepoint(App.mouse):
-			for event in pygame.event.get():
-				if event.type == MOUSEBUTTONDOWN:
-					return True
-		else:
-			return False
+
 	def CallEvent(self):
 		if self.event != None:
 			os.system(event)
@@ -310,7 +306,7 @@ class Scene():
 		pygame.display.set_caption(self.caption)
 		self.objects.update()
 		self.objects.draw(App.screen)
-		mouse_now = Text(str(App.mouse), (App.mouse[0]+10, App.mouse[1]), fontsize = 27, color = (146,110,174))
+		mouse_now = Text(str(App.mouse), (App.mouse[0]+10, App.mouse[1]), fontsize = 24, color = (146,110,174))
 		mouse_now.draw()
 		pygame.display.update()
 		try:
