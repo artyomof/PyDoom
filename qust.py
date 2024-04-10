@@ -1,9 +1,10 @@
-
-import game
+import imghdr
+import os
+from os import walk
+import pygame
 import sys
-import pygbutton
-
-
+from pygame.locals import *
+import game
 
 
 
