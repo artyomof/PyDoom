@@ -1,4 +1,3 @@
-
 import sys
-import game
-game.App.running = False
+import qust
+qust.Game.App1.running = False

@@ -1,5 +1,8 @@
 import qust
 import sys
 import game
-txx = game.Text("Молодец!!", (200,200))
-qust.Game.Level1.AddObject(txx)
+import pygame
+import main
+pygame.font.init()
+txx = game.Text("Молодец!!", (300,300))
+my_globals.App1.scene.AddObject(txx)

@@ -35,6 +35,8 @@ class App:
         App.scene.AddCollide(Obj)
         App.cons1 = cons()
         App.ConsoleCalled = False
+        pygame.font.init()
+        print('New App!')
 
     def do_shortcut(self, event):
         k = event.key
@@ -268,14 +270,14 @@ class Text():
     def __init__(self, text, pos, fontsize=72, color='black'):
         self.text = text
         self.pos = pos
-        self.fontname = None
+        self.fontname = 'arial'
         self.fontsize = fontsize
         self.fontcolor = Color(color)
         self.set_font()
         self.render()
 
     def set_font(self):
-        self.font = pygame.font.Font(self.fontname, self.fontsize)
+        self.font = pygame.font.SysFont(self.fontname, self.fontsize)
 
     def render(self):
         self.image = self.font.render(self.text, True, self.fontcolor)
