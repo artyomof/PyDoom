@@ -1,10 +1,5 @@
-import imghdr
-import os
-from os import walk
-import pygame
-import sys
-from pygame.locals import *
 import game
+App1 = game.App()
 def init():
-	global App1
-	App1 = game.App()
+	App1.selfinit()
+	App1.init2()

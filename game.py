@@ -1,13 +1,14 @@
 # обновлен мув, апдейт, джамп и инит у плеера, основной цикл, добавлена новая функция у плеера
 # обновлены импорты
 #
-
+import qust
 import imghdr
 import os
 from os import walk
 import pygame
 import sys
 from pygame.locals import *
+import re
 
 vec = pygame.math.Vector2
 HEIGHT = 960
@@ -15,20 +16,21 @@ WIDTH = 1280
 clock = pygame.time.Clock()
 ACC = 0.5
 FRIC = -0.12
-parsed = {'(xuy)\(([^)]*)': ['print({}', [2]]}
+parsed = {'(print)\(([^)]*)': ['xuy({}', [2]]}
 
 
 class App:
     def __init__(self):
-        App.TP = Player("test/right/1.png", 0, 0, animation_folder='test')
+        pass
+    def selfinit(self):
+        App.TP = Player("test/Warrior_Idle_1.png", 0, 0, animation_folder='test')
         App.Player = pygame.sprite.GroupSingle()
         App.object_id = 0
-        pygame.init()
-        flags = RESIZABLE
+        App.flags = RESIZABLE
         Obj = Object(0, HEIGHT, 'platform1.png')
-        App.screen = pygame.display.set_mode((1280, 960), flags)
         App.running = True
         App.scenes = []
+        App.Mouse = pygame.sprite.GroupSingle()
         App.scene_id = 0
         App.scene = Scene(Player=[True, 0, 0], bg=Color('black'), caption='Yappy door')
         App.scene.objects.add(Obj)
@@ -38,6 +40,9 @@ class App:
         pygame.font.init()
         print('New App!')
 
+    def init2(self):
+        pygame.init()
+        App.screen = pygame.display.set_mode((1280, 960), App.flags)
     def do_shortcut(self, event):
         k = event.key
         m = event.mod
@@ -126,39 +131,55 @@ class App:
             App.scene.draw()
             if App.TP.animation:
                 if App.TP.jumping:
-                    App.TP.image = App.TP.animation[0][App.TP.curr_jump]
-                    App.TP.curr_jump += 1
+                    if App.TP.moving_left:
+                        App.TP.image = pygame.transform.flip(App.TP.animation[0][App.TP.curr_jump], True, False)
+                        App.TP.curr_jump += 1
+                    else:
+                        App.TP.image = App.TP.animation[0][App.TP.curr_jump]
+                        App.TP.curr_jump += 1
                     print('jumped')
                     if App.TP.curr_jump >= len(App.TP.animation[0]):
                         App.TP.curr_jump = 0
                 elif App.TP.moving_left:
-                    App.TP.image = App.TP.animation[1][App.TP.curr_left]
+                    App.TP.image = pygame.transform.flip(App.TP.animation[1][App.TP.curr_left], True, False)
                     App.TP.curr_left += 1
                     print('left')
                     if App.TP.curr_left >= len(App.TP.animation[1]):
                         App.TP.curr_left = 0
                 elif App.TP.moving_right:
-                    App.TP.image = App.TP.animation[2][App.TP.curr_right]
+                    App.TP.image = App.TP.animation[1][App.TP.curr_right]
                     App.TP.curr_right += 1
                     print('right')
-                    if App.TP.curr_right >= len(App.TP.animation[2]):
+                    if App.TP.curr_right >= len(App.TP.animation[1]):
                         App.TP.curr_right = 0
                 else:
                     App.TP.image = App.TP.afk
                     App.TP.curr_right = 0
                     App.TP.curr_left = 0
                     App.TP.curr_jump = 0
+            for i in App.scene.objects:
+            	if App.TP.rect.colliderect(i.rect):
+            		i.DoCollide()
+            mouse_now = Text(str(App.mouse), (App.mouse[0] + 10, App.mouse[1]), fontsize=24, color=(146, 110, 174))
+            App.Mouse.add(mouse_now)
+            App.Mouse.update()
+            App.Mouse.draw(App.screen)
             App.TP.update()
             clock.tick(60)
         pygame.quit()
         sys.exit()
+        App.cons1.parse()
+        cons1.writetofile(App.cons1.text, 'cpns.py')
 
+
+## qust.do1
 
 class Object(pygame.sprite.Sprite):
-    def __init__(self, x, y, filename=None, name=None, event=None):
+    def __init__(self, x, y, filename=None, name=None, event=None, CollideEvent = None):
         pygame.sprite.Sprite.__init__(self)
         self.event = event
         self.id = App.object_id
+        self.CollideEvent = CollideEvent
         App.object_id += 1
         if name == None:
             self.name = 'Object {}'.format(self.id)
@@ -173,8 +194,11 @@ class Object(pygame.sprite.Sprite):
 
     def CallEvent(self):
         if self.event != None:
-            os.system(self.event)
+            exec(self.event)
 
+    def DoCollide(self):
+        if self.CollideEvent != None:
+            exec(self.CollideEvent)
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, filename, x, y, animation_folder=None):
@@ -189,17 +213,13 @@ class Player(pygame.sprite.Sprite):
         self.moving_right = False
         self.jumping = False
         if animation_folder != None:
-            self.curr_left = []
+            self.curr_left = 0
             self.curr_right = []
             self.curr_jump = []
             self.sub_folders = [name for name in os.listdir(animation_folder) if
                                 os.path.isdir(os.path.join(animation_folder, name))]
             for i in self.sub_folders:
-                if 'left' in i:
-                    self.animation_folder_left = [name for name in os.listdir(animation_folder + '/' + i)]
-                    for j in self.animation_folder_left:
-                        self.curr_left.append(pygame.image.load(animation_folder + '/' + i + '/' + j))
-                elif 'right' in i:
+                if 'right' in i:
                     self.animation_folder_right = [name for name in os.listdir(animation_folder + '/' + i)]
                     for j in self.animation_folder_right:
                         self.curr_right.append(pygame.image.load(animation_folder + '/' + i + '/' + j))
@@ -207,7 +227,7 @@ class Player(pygame.sprite.Sprite):
                     self.animation_folder_jump = [name for name in os.listdir(animation_folder + '/' + i)]
                     for j in self.animation_folder_jump:
                         self.curr_jump.append(pygame.image.load(animation_folder + '/' + i + '/' + j))
-            self.animation = [self.curr_jump, self.curr_left, self.curr_right]
+            self.animation = [self.curr_jump, self.curr_right]
             for i in self.animation:
                 print(i)
             self.curr_right = 0
@@ -266,26 +286,35 @@ class Player(pygame.sprite.Sprite):
                 self.jumping = False
 
 
-class Text():
-    def __init__(self, text, pos, fontsize=72, color='black'):
-        self.text = text
+class Text(pygame.sprite.Sprite):
+    def __init__(self, text, pos, fontsize=72, color='white'):
+        pygame.sprite.Sprite.__init__(self)
+        self.event = None
+        self.CollideEvent = None
+        self.font = pygame.font.SysFont("Arial", fontsize)
+        self.textSurf = self.font.render(text, 1, color)
+        W = self.textSurf.get_width()
+        H = self.textSurf.get_height()
         self.pos = pos
-        self.fontname = 'arial'
-        self.fontsize = fontsize
-        self.fontcolor = Color(color)
-        self.set_font()
-        self.render()
+        self.image = pygame.Surface((W, H))
+        textrect = self.textSurf.get_rect(center=self.image.get_rect().center)
+        self.image.set_colorkey((0, 0, 0))
+        self.image.blit(self.textSurf, textrect)
+        self.rect = self.image.get_rect(topleft=pos)
 
-    def set_font(self):
-        self.font = pygame.font.SysFont(self.fontname, self.fontsize)
-
-    def render(self):
-        self.image = self.font.render(self.text, True, self.fontcolor)
-        self.rect = self.image.get_rect()
-        self.rect.topleft = self.pos
 
     def draw(self):
-        App.screen.blit(self.image, self.rect.topleft)
+        self.image.blit(self.textSurf, self.pos)
+
+
+    def CallEvent(self):
+        if self.event != None:
+            exec(self.event)
+
+
+    def DoCollide(self):
+        if self.CollideEvent != None:
+            exec(self.CollideEvent)
 
 
 class Scene():
@@ -313,10 +342,7 @@ class Scene():
 
     def AddObject(self, *objects):
         for i in objects:
-            if isinstance(i, Text):
-                self.Text.append(i)
-            else:
-                self.objects.add(i)
+            self.objects.add(i)
 
     def DelObject(self, **options):
         if options.get('id', 0):
@@ -338,8 +364,6 @@ class Scene():
         pygame.display.set_caption(self.caption)
         self.objects.update()
         self.objects.draw(App.screen)
-        mouse_now = Text(str(App.mouse), (App.mouse[0] + 10, App.mouse[1]), fontsize=24, color=(146, 110, 174))
-        mouse_now.draw()
         pygame.display.update()
         try:
             App.screen.blit(self.image, (0, 0))
