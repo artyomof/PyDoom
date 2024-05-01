@@ -15,7 +15,7 @@ WIDTH = 1280
 clock = pygame.time.Clock()
 ACC = 0.5
 FRIC = -0.12
-parsed = {'(print)\(([^)]*)': ['print({}', [2]], '([^=]*)(=)(.*)': ['game.assign_x(\'{}\',{})', [1,3]]}
+parsed = {'(print)\(([^)]*)': ['game.printz(my_globals.{})', [2]], '([^=]*)(=)(.*)': ['game.assign_x(\'{}\',{})', [1,3]]}
 
 def resource_path(relative):
     if hasattr(sys, "_MEIPASS"):
@@ -26,6 +26,11 @@ def assign_x(x, y):
 	print('did!')
 	f = open('my_globals.py', 'a')
 	f.write('\n{} = \'{}\''.format(x,y)) 
+
+def printz(x):
+	new_obj = Text(x, (0, 800))
+	App.scene.printable.add(new_obj)
+
 
 
 class App:
@@ -338,9 +343,11 @@ class Text(pygame.sprite.Sprite):
 class Scene():
     ## Player = [True, x, y]
     def __init__(self, bg=Color('gray'), caption='Unnamed Scene', Player=[False], **options):
+        
         App.scenes.append(self)
         App.scene = self
         App.scene.writable = pygame.sprite.Group()
+        App.scene.printable=pygame.sprite.GroupSingle()
         self.id = App.scene_id
         App.scene_id += 1
         self.bg = bg
@@ -385,6 +392,8 @@ class Scene():
         self.objects.draw(App.screen)
         App.scene.writable.update()
         App.scene.writable.draw(App.screen)
+        App.scene.printable.update()
+        App.scene.printable.draw(App.screen)
         pygame.display.update()
         try:
             App.screen.blit(self.image, (0, 0))
