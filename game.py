@@ -16,7 +16,7 @@ WIDTH = 1280
 clock = pygame.time.Clock()
 ACC = 0.5
 FRIC = -0.12
-parsed = {'(print)\(([^)]*)': ['xuy({}', [2]]}
+parsed = {'(print)\(([^)]*)': ['print({}', [2]]}
 
 
 class App:
@@ -58,6 +58,11 @@ class App:
             print("cmd+alt+X")
         elif k == K_x and m & KMOD_LMETA + KMOD_LALT + KMOD_LSHIFT:
             print("cmd+alt+shift+X")
+        elif k == KMOD_LCTRL and m & KMOD_ENTER:
+            if App.ConsoleCalled:
+                App.cons1.parse()
+                App.cons1.writetofile(App.cons1.text, 'cpns.py')
+                App.cons1.text = ['']
 
     def run(self):
         while App.running:
@@ -73,9 +78,6 @@ class App:
                     if event.key == pygame.K_SPACE:
                         App.TP.jump()
                     if event.key == pygame.K_ESCAPE:
-                        if App.ConsoleCalled:
-                            App.cons1.parse()
-                            App.cons1.writetofile(App.cons1.text, 'cpns.py')
                         App.ConsoleCalled = not App.ConsoleCalled
                     if App.ConsoleCalled:
                         if event.key == pygame.K_RETURN:
@@ -96,13 +98,15 @@ class App:
                         elif event.key == pygame.K_LEFT:
                             App.cons1.curr_collumn -= 1
                             if App.cons1.curr_collumn < 0:
-                                App.cons1.curr_collumn = 0
-                                if App.cons1.curr_line <= 1:
+                                if App.cons1.curr_line > 0:
                                     App.cons1.curr_line -= 1
+                                    App.cons1.curr_collumn = len(App.cons1.text[App.cons1.curr_line])
+                                else:
+                                	App.cons1.curr_collumn = 0
                         elif event.key == pygame.K_RIGHT:
                             App.cons1.curr_collumn += 1
                             if App.cons1.curr_collumn > len(App.cons1.text[App.cons1.curr_line]):
-                                if App.cons1.curr_line < len(App.cons1.text):
+                                if App.cons1.curr_line < len(App.cons1.text)-1:
                                     App.cons1.curr_collumn = 0
                                     App.cons1.curr_line += 1
                                 else:
@@ -128,6 +132,7 @@ class App:
             App.TP.moving_left = False
             App.TP.moving_right = False
             App.TP.move()
+            App.cons1.draw()
             App.scene.draw()
             if App.TP.animation:
                 if App.TP.jumping:
@@ -168,8 +173,6 @@ class App:
             clock.tick(60)
         pygame.quit()
         sys.exit()
-        App.cons1.parse()
-        cons1.writetofile(App.cons1.text, 'cpns.py')
 
 
 ## qust.do1
@@ -295,7 +298,7 @@ class Text(pygame.sprite.Sprite):
         self.textSurf = self.font.render(text, 1, color)
         W = self.textSurf.get_width()
         H = self.textSurf.get_height()
-        self.pos = pos
+        self.pos = tuple(pos)
         self.image = pygame.Surface((W, H))
         textrect = self.textSurf.get_rect(center=self.image.get_rect().center)
         self.image.set_colorkey((0, 0, 0))
@@ -322,6 +325,7 @@ class Scene():
     def __init__(self, bg=Color('gray'), caption='Unnamed Scene', Player=[False], **options):
         App.scenes.append(self)
         App.scene = self
+        App.scene.writable = pygame.sprite.Group()
         self.id = App.scene_id
         App.scene_id += 1
         self.bg = bg
@@ -364,6 +368,8 @@ class Scene():
         pygame.display.set_caption(self.caption)
         self.objects.update()
         self.objects.draw(App.screen)
+        App.scene.writable.update()
+        App.scene.writable.draw(App.screen)
         pygame.display.update()
         try:
             App.screen.blit(self.image, (0, 0))
@@ -381,16 +387,34 @@ class Scene():
         return 'Scene {}'.format(self.id)
 
 
-class cons(pygame.sprite.Sprite):
+class cons(pygame.sprite.Sprite, App):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load('Console.png')
         self.rect = self.image.get_rect(topleft=(0, 0))
         self.Console = pygame.sprite.GroupSingle()
         self.Console.add(self)
+        self.strings = []
         self.text = ['']
         self.curr_line = 0
         self.curr_collumn = 0
+
+    def draw(self):
+        App.scene.writable = pygame.sprite.Group()
+        for i in self.strings:
+        	i.kill()
+        self.strings = []
+        curr_pos_of_text = [0, 0]
+        for i in self.text:
+            if self.text.index(i) == self.curr_line:
+                pen = self.text[self.curr_line][:self.curr_collumn] + '|' + self.text[self.curr_line][self.curr_collumn:]
+                App.scene.writable.add(Text(pen, curr_pos_of_text))
+            else:
+                App.scene.writable.add(Text(i, curr_pos_of_text))
+                self.strings.append(Text(i, curr_pos_of_text))
+                curr_pos_of_text[1] += Text(i, curr_pos_of_text).textSurf.get_height()
+            print(i)
+        App.scene.writable.update()
 
     def Add_to(self, line, collumn, item):
         self.text[line] = self.text[line][:collumn] + item + self.text[line][collumn:]
@@ -399,10 +423,7 @@ class cons(pygame.sprite.Sprite):
     def del_from(self, line, collumn):
         self.text[line] = self.text[line][:collumn - 1] + self.text[line][collumn:]
         self.curr_collumn -= 1
-
-    def call(self):
-        self.Console.draw(screen)
-
+        
     def writetofile(self, list, file):
         with open(file, 'w') as output:
             output.write('import pygame' + '\n')

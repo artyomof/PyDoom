@@ -25,7 +25,7 @@ class Game():
         Game.txt = game.Text("Вы любите пайтон?", (100,100))
         Game.Level1.AddObject(Game.txt)
         App.scene = Game.Level1
-
+        Game.Level2Nepravilno = Text('Неправильно!', (800, 0))
 def oncrash():
     pygame.font.init()
     txx = game.Text("Молодец!!", (300,300))
@@ -41,3 +41,12 @@ def level1complete():
     my_globals.App1.TP.pos.y = 0
     my_globals.App1.TP.pos.x = 0
     my_globals.App1.scene = Game.Level2
+
+
+def print1():
+    result = re.search('(print)\(([^)]*)', my_globals.App1.cons1.text[0])
+    if result != None:
+        my_globals.App1.scene.AddObject(Text(result.group(2), (800, 0)))
+        Game.Level2Nepravilno.kill()
+    if result == None:
+        my_globals.App1.scene.AddObject(Game.Level2Nepravilno)
