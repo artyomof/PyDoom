@@ -1,7 +1,6 @@
 # обновлен мув, апдейт, джамп и инит у плеера, основной цикл, добавлена новая функция у плеера
 # обновлены импорты
 #
-import qust
 import imghdr
 import os
 from os import walk
@@ -16,14 +15,24 @@ WIDTH = 1280
 clock = pygame.time.Clock()
 ACC = 0.5
 FRIC = -0.12
-parsed = {'(print)\(([^)]*)': ['print({}', [2]]}
+parsed = {'(print)\(([^)]*)': ['print({}', [2]], '([^=]*)(=)(.*)': ['game.assign_x(\'{}\',{})', [1,3]]}
+
+def resource_path(relative):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative)
+    return os.path.join(relative)
+
+def assign_x(x, y):
+	print('did!')
+	f = open('my_globals.py', 'a')
+	f.write('\n{} = \'{}\''.format(x,y)) 
 
 
 class App:
     def __init__(self):
         pass
     def selfinit(self):
-        App.TP = Player("test/Warrior_Idle_1.png", 0, 0, animation_folder='test')
+        App.TP = Player("C:/PyDoom/test/Warrior_Idle_1.png", 0, 0, animation_folder='C:/PyDoom/test')
         App.Player = pygame.sprite.GroupSingle()
         App.object_id = 0
         App.flags = RESIZABLE
@@ -78,6 +87,12 @@ class App:
                     if event.key == pygame.K_SPACE:
                         App.TP.jump()
                     if event.key == pygame.K_ESCAPE:
+                    
+                        if App.ConsoleCalled == True:
+                            App.cons1.parse()
+                            App.cons1.writetofile(App.cons1.text, 'cpns.py')
+                            App.cons1.text = ['']
+                            os.system('python cpns.py')
                         App.ConsoleCalled = not App.ConsoleCalled
                     if App.ConsoleCalled:
                         if event.key == pygame.K_RETURN:
