@@ -30,9 +30,9 @@ class Game():
 def oncrash():
     pygame.font.init()
     txx = game.Text("Молодец!!", (300,300))
-    my_globals.App1.scene.AddObject(txx)
+    Game.Level1.AddObject(txx)
     Level1c = game.Object(1160, 820, 'door.png', CollideEvent="qust.level1complete()")
-    my_globals.App1.scene.AddObject(Level1c)
+    Game.Level1.AddObject(Level1c)
 
 def level1complete():
     Game.Level2 = game.Scene(caption= 'Level 2', bg_image = "vopros.jpg", Player = [True, 0, 900])
@@ -45,10 +45,6 @@ def level1complete():
     Game.Level2b = game.Object(800, 500, "no.png.", event="EventCrash.py")
     Game.Level2.AddObject(Game.Level2a)
     Game.Level2.AddObject(Game.Level2b)
-
-    my_globals.App1.TP.pos.y = 0
-    my_globals.App1.TP.pos.x = 0
-    my_globals.App1.scene = Game.Level2
 
 
 
@@ -74,7 +70,7 @@ def level3complete():
     Game.Level4.AddObject(game.Text("Теперь создайте любую переменную она понадобится дальше!", (160,160),fontsize=36))
     Game.Level4.AddCollide(Game.obj4)
     Game.Level4.AddObject(Game.obj4)
-    Game.Level4a = game.Object(300, 500, 'DA.png.', event="qust.print()")
+    Game.Level4a = game.Object(300, 500, 'DA.png.', event="qust.print3()")
     Game.Level4b = game.Object(800, 500, "no.png.", event="EventCrash.py")
     Game.Level4.AddObject(Game.Level4a)
     Game.Level4.AddObject(Game.Level4b)

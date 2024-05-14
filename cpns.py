@@ -3,4 +3,8 @@ import os
 import game
 from pygame.locals import *
 import sys
-φοφοφτοστοφσοφxuy(xuy)xuy(xuy)
+import my_globals
+try:
+    game.assign_list('x ', 'xuy')
+except:
+    game.printz('νεοπΰβθλόνξε ηνΰχενθε', 36)

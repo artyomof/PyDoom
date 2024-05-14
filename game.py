@@ -1,6 +1,6 @@
 # обновлен мув, апдейт, джамп и инит у плеера, основной цикл, добавлена новая функция у плеера
 # обновлены импорты
-#
+
 import imghdr
 import os
 from os import walk
@@ -8,6 +8,7 @@ import pygame
 import sys
 from pygame.locals import *
 import re
+import qust
 
 vec = pygame.math.Vector2
 HEIGHT = 960
@@ -15,20 +16,33 @@ WIDTH = 1280
 clock = pygame.time.Clock()
 ACC = 0.5
 FRIC = -0.12
-parsed = {'(print)\(([^)]*)': ['game.printz(my_globals.{})', [2]], '([^=]*)(=)(.*)': ['game.assign_x(\'{}\',{})', [1,3]]}
+parsed = { '(print)\(([\'\"][^)]*[\'\"])': ['game.printz({}', [2]],
+ '(print)\(([^)]*)': ['try:\n    game.printz(my_globals.{})\nexcept AttributeError:\n    game.printz(\'неправильное значение переменной\', 36', [2]],
+ '([^=]*)(=)(.*)': ['try:\n    game.assign_list(\'{}\',{})\nexcept:\n    game.printz(\'неправильное значение\', 36)', [1,3]]}
+
+
 
 def resource_path(relative):
     if hasattr(sys, "_MEIPASS"):
         return os.path.join(sys._MEIPASS, relative)
     return os.path.join(relative)
 
-def assign_x(x, y):
+def assign_str(x, y):
 	print('did!')
 	f = open('my_globals.py', 'a')
 	f.write('\n{} = \'{}\''.format(x,y)) 
 
-def printz(x):
-	new_obj = Text(x, (0, 800))
+def assign_list(x, y):
+	print('did!')
+	if type(y) is not int:
+		if type(y) is not list:
+			y = f'\'{y}\''
+	f = open('my_globals.py', 'a')
+	f.write('\n{} = {}'.format(x,y)) 
+
+def printz(x, sfontsize = 72):
+	x = str(x)
+	new_obj = Text(x, (800, 0), fontsize = sfontsize)
 	App.scene.printable.add(new_obj)
 
 
@@ -76,6 +90,8 @@ class App:
             if App.ConsoleCalled:
                 App.cons1.parse()
                 App.cons1.writetofile(App.cons1.text, 'cpns.py')
+                with open("cpns.py") as file:
+                    exec(file.read())
                 App.cons1.text = ['']
 
     def run(self):
@@ -97,7 +113,8 @@ class App:
                             App.cons1.parse()
                             App.cons1.writetofile(App.cons1.text, 'cpns.py')
                             App.cons1.text = ['']
-                            os.system('python cpns.py')
+                            exec(open("cpns.py").read())
+                            App.cons1.curr_collumn = 0
                         App.ConsoleCalled = not App.ConsoleCalled
                     if App.ConsoleCalled:
                         if event.key == pygame.K_RETURN:
@@ -455,6 +472,7 @@ class cons(pygame.sprite.Sprite, App):
             output.write('import game' + '\n')
             output.write('from pygame.locals import *' + '\n')
             output.write('import sys' + '\n')
+            output.write('import my_globals' + '\n')
             for row in list:
                 output.write(str(row) + '\n')
 
